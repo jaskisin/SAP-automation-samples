@@ -1,24 +1,28 @@
-name: Access YAML Files in SAP Directory
+name: Process Specific YAML File in SAP Directory
 
 on:
   workflow_dispatch:
 
 jobs:
-  access-yaml-files:
+  process-yaml-file:
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: List YAML files
+    - name: Read YAML file attributes
+      id: read-yaml
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const yaml = require('js-yaml');
+          const filePath = 'SAP/SWPM20SP18_latest/SWPM20SP18_latest.yaml';
+          const fileContents = fs.readFileSync(filePath, 'utf8');
+          const data = yaml.load(fileContents);
+          return data;  // Replace with your specific attribute if needed
+
+    - name: Output YAML attributes
       run: |
-        echo "Listing YAML files in the SAP directory:"
-        find SAP -name '*.yaml'
-      
-    - name: Process YAML files
-      run: |
-        for file in $(find SAP -name '*.yaml'); do
-          echo "Processing $file"
-          # Add your processing commands here
-        done
+        echo "YAML attributes: ${{ steps.read-yaml.outputs.result }}"
