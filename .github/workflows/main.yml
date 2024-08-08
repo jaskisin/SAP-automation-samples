@@ -23,14 +23,16 @@ jobs:
       id: read-yaml
       uses: actions/github-script@v6
       with:
-        script: |
+        run: |
+          node -e "
           const fs = require('fs');
           const yaml = require('js-yaml');
           const filePath = 'SAP/SWPM20SP18_latest/SWPM20SP18_latest.yaml';
           const fileContents = fs.readFileSync(filePath, 'utf8');
           const data = yaml.load(fileContents);
-          return data;  // Replace with your specific attribute if needed
-
+          console.log(JSON.stringify(data));
+          " > result.json
+        
     - name: Output YAML attributes
       run: |
-        echo "YAML attributes: ${{ steps.read-yaml.outputs.result }}"
+        echo "YAML attributes: $(cat result.json)"
