@@ -18,10 +18,10 @@ jobs:
       id: extract_yaml
       run: |
         # Extract the 'version' attribute from the YAML file
-        version=$(yq eval '.app.version' SAP/SWPM20SP18_latest/SWPM20SP18_latest.yaml)
-        echo "YAML version: $version"
+        version=$(yq eval '.materials.media.url' SAP/SWPM20SP18_latest/SWPM20SP18_latest.yaml)
+        echo "YAML url: $url"
         # Set the extracted value as an output for later use
-        echo "::set-output name=version::$version"
+        echo "::set-output name=url::$url"
 
     - name: Use the extracted version
       run: echo "The extracted version is ${{ steps.extract_yaml.outputs.version }}"
