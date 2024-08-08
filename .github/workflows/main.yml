@@ -12,13 +12,15 @@ jobs:
       uses: actions/checkout@v2
       
     - name: Install yq
-      run: wget https://github.com/mikefarah/yq/releases/download/v4.34.2/yq_linux_amd64
+      run: |
+        wget https://github.com/mikefarah/yq/releases/download/v4.34.2/yq_linux_amd64 -O yq
+        chmod +x yq
 
     - name: Extract YAML attribute
       id: extract_yaml
       run: |
         # Extract the 'version' attribute from the YAML file
-        version=$(yq eval '.materials.media.url' SAP/SWPM20SP18_latest/SWPM20SP18_latest.yaml)
+        version=$(yq eval '.materials.media[0].url' SAP/SWPM20SP18_latest/SWPM20SP18_latest.yaml)
         echo "YAML url: $url"
         # Set the extracted value as an output for later use
         echo "::set-output name=url::$url"
