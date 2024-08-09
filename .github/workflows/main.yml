@@ -26,4 +26,31 @@ jobs:
         echo "::set-output name=url::$url"
 
     - name: Use the extracted version
-      run: echo "The extracted version is ${{ steps.extract_yaml.outputs.version }}"
+      run: echo "The extracted version is ${{ steps.extract_yaml.outputs.url }}"
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install selenium webdriver-manager
+
+    - name: Create Selenium test script
+      run: |
+        echo "from selenium import webdriver
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.chrome.service import Service
+        from webdriver_manager.chrome import ChromeDriverManager
+        
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+        driver.get('${{ steps.extract_yaml.outputs.url }}')
+        button = driver.find_element(By.ID, 'exampleButton')
+        button.click()
+        driver.quit()" > your_test_script.py
+
+    - name: Run Selenium tests
+      run: |
+        python your_test_script.py
