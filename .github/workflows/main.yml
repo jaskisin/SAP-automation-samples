@@ -42,14 +42,14 @@ jobs:
         Add-Type -Path .\Selenium.WebDriver.ChromeDriver\driver\win32\chromedriver.exe
         
         # Set up Chrome options
-        #$chromeOptions = New-Object OpenQA.Selenium.Chrome.ChromeOptions
+        $chromeOptions = New-Object OpenQA.Selenium.Chrome.ChromeOptions
         #$chromeOptions.AddArgument('--headless')
         #$chromeOptions.AddArgument('--no-sandbox')
         #$chromeOptions.AddArgument('--disable-dev-shm-usage')
         
         # Initialize the WebDriver
         $service = [OpenQA.Selenium.Chrome.ChromeDriverService]::CreateDefaultService(".\Selenium.WebDriver.ChromeDriver\driver\win32", "chromedriver.exe")
-        $driver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($service)
+        $driver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($service,$chromeOptions)
         $driver.Navigate().GoToUrl('https://accounts.sap.com/saml2/idp/sso?sp=sp.accounts.sap.com&RelayState=https://accounts.sap.com/ui/protected/profilemanagement')
 
         # Find the username field and input username
