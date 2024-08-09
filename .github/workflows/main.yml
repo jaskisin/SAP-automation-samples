@@ -1,84 +1,68 @@
-name: Process Specific YAML File in SAP Directory on Windows
-
+name: Process Specific YAML File in SAP Directory
 on:
   workflow_dispatch:
-
 jobs:
   process-yaml-file:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-
+      
     - name: Install yq
       run: |
-        Invoke-WebRequest -Uri https://github.com/mikefarah/yq/releases/download/v4.34.2/yq_windows_amd64.exe -OutFile yq.exe
-        ./yq.exe --version
-
+        wget https://github.com/mikefarah/yq/releases/download/v4.34.2/yq_linux_amd64 -O yq
+        chmod +x yq
     - name: Extract YAML attribute
       id: extract_yaml
       run: |
-        $url = ./yq.exe eval '.materials.media[0].url' SAP/SWPM20SP18_latest/SWPM20SP18_latest.yaml
+        # Extract the 'version' attribute from the YAML file
+        url=$(./yq eval '.materials.media[0].url' SAP/SWPM20SP18_latest/SWPM20SP18_latest.yaml)
         echo "YAML url: $url"
+        # Set the extracted value as an output for later use
         echo "::set-output name=url::$url"
-
-    - name: Use the extracted URL
-      run: echo "The extracted URL is ${{ steps.extract_yaml.outputs.url }}"
-
-    - name: Download Selenium WebDriver dependencies
+    - name: Use the extracted version
+      run: echo "The extracted version is ${{ steps.extract_yaml.outputs.url }}"
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
       run: |
-        Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/Selenium.WebDriver/4.8.1 -OutFile Selenium.WebDriver.zip
-        Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/Selenium.WebDriver.ChromeDriver/114.0.5735.9000 -OutFile Selenium.WebDriver.ChromeDriver.zip
-        #Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/webdriver_manager/3.2.2 -OutFile webdriver_manager.zip
-        Expand-Archive -Path Selenium.WebDriver.zip -DestinationPath .\Selenium.WebDriver
-        Expand-Archive -Path Selenium.WebDriver.ChromeDriver.zip -DestinationPath .\Selenium.WebDriver.ChromeDriver
-        #Expand-Archive -Path webdriver_manager.zip -DestinationPath .\webdriver_manager
-
-    - name: Create Selenium test script in PowerShell
+        python -m pip install --upgrade pip
+        pip install selenium webdriver-manager
+    - name: Create Selenium test script
       run: |
-        Add-Content -Path your_test_script.ps1 -Value @"
-        Add-Type -Path .\Selenium.WebDriver\lib\net48\WebDriver.dll
-        Add-Type -Path .\Selenium.WebDriver.ChromeDriver\driver\win32\chromedriver.exe
+        echo "from selenium import webdriver
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.chrome.service import Service
+        from selenium.webdriver.chrome.options import Options
+        from webdriver_manager.chrome import ChromeDriverManager
+        import requests
         
-        # Set up Chrome options
-        $chromeOptions = New-Object OpenQA.Selenium.Chrome.ChromeOptions
-        #$chromeOptions.AddArgument('--headless')
-        #$chromeOptions.AddArgument('--no-sandbox')
-        #$chromeOptions.AddArgument('--disable-dev-shm-usage')
-        
-        # Initialize the WebDriver
-        $service = [OpenQA.Selenium.Chrome.ChromeDriverService]::CreateDefaultService(".\Selenium.WebDriver.ChromeDriver\driver\win32", "chromedriver.exe")
-        $driver = New-Object OpenQA.Selenium.Chrome.ChromeDriver($service,$chromeOptions)
-        $driver.Navigate().GoToUrl('https://accounts.sap.com/saml2/idp/sso?sp=sp.accounts.sap.com&RelayState=https://accounts.sap.com/ui/protected/profilemanagement')
+        options = Options()
+        #options.add_argument('--headless')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--enable-javascript')
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        driver.get('https://accounts.sap.com/saml2/idp/sso?sp=sp.accounts.sap.com&RelayState=https://accounts.sap.com/ui/protected/profilemanagement')
+        usernameelement = driver.find_element(By.ID, 'j_username')
+        usernameelement.send_keys('S0023762024')
+        passwordelement = driver.find_element(By.ID, 'j_password')
+        passwordelement.send_keys('Azureuser23!')
+        loginelement = driver.find_element(By.ID, 'logOnFormSubmit')
+        loginelement.click()
+        # Convert cookies from Selenium to requests-compatible format
+        session_cookies = driver.get_cookies()
+        cookies_dict = {cookie['name']: cookie['value'] for cookie in session_cookies}
 
-        # Find the username field and input username
-        $usernameElement = $driver.FindElementById('j_username')
-        $usernameElement.SendKeys('S0023762024')
-        
-        # Find the password field and input password
-        $passwordElement = $driver.FindElementById('j_password')
-        $passwordElement.SendKeys('Azureuser23!')
-        
-        # Find the login button and click it
-        $loginElement = $driver.FindElementById('logOnFormSubmit')
-        $loginElement.Click()
-
-        # Wait for the page to load properly
-        Start-Sleep -Seconds 10
-
-        # Access the XML URL
-        $xmlUrl = 'https://launchpad.support.sap.com/services/odata/svt/swdcuisrv/ObjectSet(\'0020000000743952024\')?sap-language=en'
-        $cookies = $driver.Manage().Cookies.AllCookies | ForEach-Object { $_.Name + "=" + $_.Value } -join "; "
-        $response = Invoke-WebRequest -Uri $xmlUrl -Headers @{ 'Cookie' = $cookies } -UseBasicParsing
-
+        # After login, retrieve the XML content
+        xml_url = 'https://launchpad.support.sap.com/services/odata/svt/swdcuisrv/ObjectSet(\\'0020000000743952024\\')?sap-language=en'
+        response = requests.get(xml_url, cookies=cookies_dict)
         # Print the XML content
-        Write-Host $response.Content
-
-        # Quit the driver
-        $driver.Quit()
-        "@
-
-    - name: Run Selenium test in PowerShell
+        print(response.text)
+        driver.quit()" > your_test_script.py
+    - name: Run Selenium tests
       run: |
-        powershell.exe -ExecutionPolicy Bypass -File your_test_script.ps1
+        python your_test_script.py
