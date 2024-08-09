@@ -61,8 +61,8 @@ jobs:
         loginelement = driver.find_element(By.ID, 'logOnFormSubmit')
         loginelement.click()
         # After login, retrieve the XML content
-        xml_url = 'https://launchpad.support.sap.com/services/odata/svt/swdcuisrv/ObjectSet(\'0020000000743952024\')?sap-language=en'
-        response = requests.get(xml_url, cookies=driver.get_cookies())
+        xml_url = 'https://launchpad.support.sap.com/services/odata/svt/swdcuisrv/ObjectSet(\\'0020000000743952024\\')?sap-language=en'
+        response = requests.get(xml_url, cookies=cookies_dict)
         # Print the XML content
         print(response.text)
         driver.quit()" > your_test_script.py
