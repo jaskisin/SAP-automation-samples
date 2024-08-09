@@ -30,10 +30,10 @@ jobs:
       run: |
         Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/Selenium.WebDriver/4.8.1 -OutFile Selenium.WebDriver.zip
         Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/Selenium.WebDriver.ChromeDriver/114.0.5735.9000 -OutFile Selenium.WebDriver.ChromeDriver.zip
-        Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/webdriver_manager/3.2.2 -OutFile webdriver_manager.zip
+        #Invoke-WebRequest -Uri https://www.nuget.org/api/v2/package/webdriver_manager/3.2.2 -OutFile webdriver_manager.zip
         Expand-Archive -Path Selenium.WebDriver.zip -DestinationPath .\Selenium.WebDriver
         Expand-Archive -Path Selenium.WebDriver.ChromeDriver.zip -DestinationPath .\Selenium.WebDriver.ChromeDriver
-        Expand-Archive -Path webdriver_manager.zip -DestinationPath .\webdriver_manager
+        #Expand-Archive -Path webdriver_manager.zip -DestinationPath .\webdriver_manager
 
     - name: Create Selenium test script in PowerShell
       run: |
