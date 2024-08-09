@@ -52,9 +52,13 @@ jobs:
         options.add_argument('--disable-dev-shm-usage')
         
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-        driver.get('https://example.com')
-        button = driver.find_element(By.ID, 'exampleButton')
-        button.click()
+        driver.get('https://accounts.sap.com/saml2/idp/sso?sp=sp.accounts.sap.com&RelayState=https://accounts.sap.com/ui/protected/profilemanagement')
+        usernameelement = driver.find_element(By.ID, 'j_username')
+        usernameelement.send_keys('S0023762024')
+        passwordelement = driver.find_element(By.ID, 'j_password')
+        passwordelement.send_keys('Azureuser23!')
+        loginelement = driver.find_element(By.ID, 'logOnFormSubmit')
+        loginelement.click()
         driver.quit()" > your_test_script.py
 
     - name: Run Selenium tests
